@@ -49,7 +49,7 @@
     <% end %>
   </tbody>
 </table>
-<%= render 'shared/pagination' %>
+<%= render 'shared/pagination', collection: @students %>
 
 <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newStudentModal">
   Add New Student
@@ -58,75 +58,106 @@
 
 <script>
   document.addEventListener("DOMContentLoaded", function () {
-    // Handle edit button click
-    document.querySelectorAll(".edit-btn").forEach(button => {
-      button.addEventListener("click", function () {
-        const row = this.closest("tr");
-        row.querySelectorAll(".text").forEach(span => {
-          span.style.display = "none"; // Hide the span
-        });
-        row.querySelectorAll(".edit-input").forEach(input => {
-          input.style.display = "block"; // Show the input
-        });
-        row.querySelector(".save-btn").style.display = "inline-block";
-        row.querySelector(".edit-btn").style.display = "none";
-      });
+  let activeRow = null;
+
+  function initializeDropdowns() {
+    var dropdownElements = document.querySelectorAll('.dropdown-toggle');
+    dropdownElements.forEach(dropdown => {
+      new bootstrap.Dropdown(dropdown);
     });
+  }
 
-    document.querySelectorAll(".save-btn").forEach(button => {
-      button.addEventListener("click", function () {
-        const row = this.closest("tr");
-        const studentId = row.dataset.studentId;
+  initializeDropdowns();
 
-        const inputs = row.querySelectorAll('.edit-input');
-        const updatedData = {
-          name: inputs[0].value,
-          subject: inputs[1].value,
-          marks: inputs[2].value,
-        };
-
-
-        fetch(`/students/${studentId}`, {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRF-Token": document.querySelector("meta[name='csrf-token']").content,
-          },
-          body: JSON.stringify({ student: updatedData }),
-        })
-        .then(response => {
-          if (!response.ok) {
-            throw new Error('Network response was not ok');
-          }
-          return response.json();
-        })
-        .then(data => {
-          // Update the displayed data
-          const textElements = row.querySelectorAll('.text');
-          textElements[0].textContent = updatedData.name;
-          textElements[1].textContent = updatedData.subject;
-          textElements[2].textContent = updatedData.marks;
-
-          const flashMessage = document.getElementById('flash-message');
-          flashMessage.textContent = data.message;
-          flashMessage.style.display = 'block';
-
-          setTimeout(() => {
-            flashMessage.style.display = 'none';
-          }, 3000);
-
-          // Hide the inputs and show the spans again
-          row.querySelectorAll(".edit-input").forEach(input => {
-            input.style.display = "none";
-          });
-          row.querySelectorAll(".text").forEach(span => {
-            span.style.display = "inline";
-          });
-          this.style.display = "none";
-          row.querySelector(".edit-btn").style.display = "inline-block";
-        })
-        .catch(error => console.error('Fetch error:', error));
-      });
+  // Handle edit button click
+  document.querySelectorAll(".edit-btn").forEach(button => {
+    button.addEventListener("click", function () {
+      const row = this.closest("tr");
+      setRowEditable(row);
     });
   });
+
+  document.querySelectorAll(".save-btn").forEach(button => {
+    button.addEventListener("click", function () {
+      saveRow(this.closest("tr"));
+    });
+  });
+
+  // Set the row to be editable
+  function setRowEditable(row) {
+    if (activeRow && activeRow !== row) {
+      saveRow(activeRow);
+    }
+    
+    activeRow = row;
+    
+    row.querySelectorAll(".text").forEach(span => {
+      span.style.display = "none";
+    });
+    row.querySelectorAll(".edit-input").forEach(input => {
+      input.style.display = "block";
+    });
+    row.querySelector(".save-btn").style.display = "inline-block";
+    row.querySelector(".edit-btn").style.display = "none";
+  }
+
+  function saveRow(row) {
+    const studentId = row.dataset.studentId;
+    const inputs = row.querySelectorAll('.edit-input');
+    const updatedData = {
+      name: inputs[0].value,
+      subject: inputs[1].value,
+      marks: inputs[2].value,
+    };
+
+    fetch(`/students/${studentId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": document.querySelector("meta[name='csrf-token']").content,
+      },
+      body: JSON.stringify({ student: updatedData }),
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return response.json();
+    })
+    .then(data => {
+      const textElements = row.querySelectorAll('.text');
+      textElements[0].textContent = updatedData.name;
+      textElements[1].textContent = updatedData.subject;
+      textElements[2].textContent = updatedData.marks;
+
+      const flashMessage = document.getElementById('flash-message');
+      flashMessage.textContent = data.message;
+      flashMessage.style.display = 'block';
+
+      setTimeout(() => {
+        flashMessage.style.display = 'none';
+      }, 3000);
+
+      row.querySelectorAll(".edit-input").forEach(input => {
+        input.style.display = "none";
+      });
+      row.querySelectorAll(".text").forEach(span => {
+        span.style.display = "inline";
+      });
+      row.querySelector(".save-btn").style.display = "none";
+      row.querySelector(".edit-btn").style.display = "inline-block";
+      activeRow = null;
+    })
+    .catch(error => console.error('Fetch error:', error));
+  }
+
+  document.addEventListener("click", function (event) {
+    const isInsideRow = event.target.closest("tr") === activeRow;
+    const isInsideButton = event.target.closest(".dropdown-menu");
+
+    if (activeRow && !isInsideRow && !isInsideButton) {
+      saveRow(activeRow);
+    }
+  });
+});
 </script>

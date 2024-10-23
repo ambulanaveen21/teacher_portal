@@ -15,6 +15,7 @@
     <link rel="apple-touch-icon" href="/icon.png">
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
   </head>
 
 <body>
@@ -44,11 +45,16 @@
     </nav>
   <% end %>
 
-  <% flash.each do |key, message| %>
-    <div class="flash-message <%= key %>">
-      <%= message %>
+  <% if flash.any? %>
+    <div class="flash-messages" style="text-align: center; margin-bottom: 10px;">
+      <% flash.each do |key, message| %>
+        <div class="flash-message <%= key %>" style="color: <%= key == 'alert' ? 'red' : 'orange' %>;">
+          <%= message %>
+        </div>
+      <% end %>
     </div>
   <% end %>
+
 
   <div class="container mt-4">
     <%= yield %>
