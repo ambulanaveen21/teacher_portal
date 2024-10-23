@@ -1,0 +1,132 @@
+<div id="flash-message" style="display:none;" class="alert alert-info"></div>
+<table class="table table-striped table-bordered">
+  <thead class="thead-dark">
+    <tr>
+      <th>Name</th>
+      <th>Subject</th>
+      <th>Marks</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @students.each do |student| %>
+      <tr data-student-id="<%= student.id %>">
+        <td class="editable" data-field="name">
+          <span class="text"><%= student.name %></span>
+          <input type="text" class="form-control edit-input" value="<%= student.name %>" style="display: none;" />
+        </td>
+        <td class="editable" data-field="subject">
+          <span class="text"><%= student.subject %></span>
+          <input type="text" class="form-control edit-input" value="<%= student.subject %>" style="display: none;" />
+        </td>
+        <td class="editable" data-field="marks">
+          <span class="text"><%= student.marks %></span>
+          <input type="number" class="form-control edit-input" value="<%= student.marks %>" style="display: none;" />
+        </td>
+        <td>
+          <div class="dropdown">
+            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton-<%= student.id %>" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="fas fa-cog"></i>
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton-<%= student.id %>">
+              <li>
+                <button class="dropdown-item edit-btn" type="button">
+                  <i class="fas fa-edit"></i> Edit
+                </button>
+              </li>
+              <li>
+                <button class="dropdown-item save-btn" type="button" style="display: none;">
+                  <i class="fas fa-save"></i> Save
+                </button>
+              </li>
+              <li>
+                <%= link_to '<i class="fas fa-trash"></i> Delete'.html_safe, student, data: { turbo_method: :delete, turbo_confirm: 'Are you sure?' }, class: 'dropdown-item' %>
+              </li>
+            </ul>
+          </div>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+<%= render 'shared/pagination' %>
+
+<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newStudentModal">
+  Add New Student
+</button>
+<%= render 'student_modal' %>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Handle edit button click
+    document.querySelectorAll(".edit-btn").forEach(button => {
+      button.addEventListener("click", function () {
+        const row = this.closest("tr");
+        row.querySelectorAll(".text").forEach(span => {
+          span.style.display = "none"; // Hide the span
+        });
+        row.querySelectorAll(".edit-input").forEach(input => {
+          input.style.display = "block"; // Show the input
+        });
+        row.querySelector(".save-btn").style.display = "inline-block";
+        row.querySelector(".edit-btn").style.display = "none";
+      });
+    });
+
+    document.querySelectorAll(".save-btn").forEach(button => {
+      button.addEventListener("click", function () {
+        const row = this.closest("tr");
+        const studentId = row.dataset.studentId;
+
+        const inputs = row.querySelectorAll('.edit-input');
+        const updatedData = {
+          name: inputs[0].value,
+          subject: inputs[1].value,
+          marks: inputs[2].value,
+        };
+
+
+        fetch(`/students/${studentId}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-Token": document.querySelector("meta[name='csrf-token']").content,
+          },
+          body: JSON.stringify({ student: updatedData }),
+        })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+          return response.json();
+        })
+        .then(data => {
+          // Update the displayed data
+          const textElements = row.querySelectorAll('.text');
+          textElements[0].textContent = updatedData.name;
+          textElements[1].textContent = updatedData.subject;
+          textElements[2].textContent = updatedData.marks;
+
+          const flashMessage = document.getElementById('flash-message');
+          flashMessage.textContent = data.message;
+          flashMessage.style.display = 'block';
+
+          setTimeout(() => {
+            flashMessage.style.display = 'none';
+          }, 3000);
+
+          // Hide the inputs and show the spans again
+          row.querySelectorAll(".edit-input").forEach(input => {
+            input.style.display = "none";
+          });
+          row.querySelectorAll(".text").forEach(span => {
+            span.style.display = "inline";
+          });
+          this.style.display = "none";
+          row.querySelector(".edit-btn").style.display = "inline-block";
+        })
+        .catch(error => console.error('Fetch error:', error));
+      });
+    });
+  });
+</script>

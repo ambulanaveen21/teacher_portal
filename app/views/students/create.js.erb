@@ -1,0 +1,6 @@
+<% if @student.errors.any? %>
+  $('#error_explanation').html("<%= j render 'shared/error_messages', object: @student %>");
+<% else %>
+  $('#newStudentModal').modal('hide'); // Hide the modal if there are no errors
+  window.location.href = '<%= students_path %>'; // Redirect to the students index
+<% end %>

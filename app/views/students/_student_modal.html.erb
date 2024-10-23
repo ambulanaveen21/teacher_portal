@@ -1,0 +1,23 @@
+<div class="modal fade" id="newStudentModal" tabindex="-1" aria-labelledby="newStudentModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="newStudentModalLabel">New Student</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <% if @student&.errors&.any? %>
+          <div class="alert alert-danger">
+            <h4><%= pluralize(@student&.errors&.count, "error") %> prohibited this student from being saved:</h4>
+            <ul>
+              <% @student&.errors&.full_messages&.each do |msg| %>
+                <li><%= msg %></li>
+              <% end %>
+            </ul>
+          </div>
+        <% end %>
+        <%= render 'form', student: @student %>
+      </div>
+    </div>
+  </div>
+</div>

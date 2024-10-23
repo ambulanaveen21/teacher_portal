@@ -1,0 +1,9 @@
+<div class="pagination">
+  <div class="pagination-info">
+    <p>Page <%= @students.current_page %> of <%= @students.total_pages %></p>
+  </div>
+
+  <div class="pagination-links">
+    <%= paginate @students %>
+  </div>
+</div>
