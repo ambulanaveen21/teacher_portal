@@ -1,9 +1,11 @@
 <div class="pagination">
   <div class="pagination-info">
-    <p>Page <%= @students.current_page %> of <%= @students.total_pages %></p>
+    <% if collection.present? %>
+      <p>Page <%= collection.current_page %> of <%= collection.total_pages %></p>
+    <% end %>
   </div>
 
   <div class="pagination-links">
-    <%= paginate @students %>
+    <%= paginate collection %>
   </div>
 </div>
